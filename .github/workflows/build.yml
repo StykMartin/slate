@@ -10,33 +10,30 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        ruby-version: [3.3]
+    container:
+      image: ghcr.io/oracle/oraclelinux8-ruby:3.3
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Ruby
-      uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: ${{ matrix.ruby-version }}
+      - uses: actions/checkout@v4
 
-    - uses: actions/cache@v4
-      with:
-        path: vendor/bundle
-        key: gems-${{ runner.os }}-${{ matrix.ruby-version }}-${{ hashFiles('**/Gemfile.lock') }}
-        restore-keys: |
-          gems-${{ runner.os }}-${{ matrix.ruby-version }}-
-          gems-${{ runner.os }}-
+      - name: Install dependencies
+        run: |
+          dnf groupinstall -y 'Development Tools'
+          dnf install -y git nodejs
+          gem install bundler
 
-    # necessary to get ruby 2.3 to work nicely with bundler vendor/bundle cache
-    # can remove once ruby 2.3 is no longer supported
-    - run: gem update --system
+      - name: Cache gems
+        uses: actions/cache@v4
+        with:
+          path: vendor/bundle
+          key: gems-${{ runner.os }}-${{ hashFiles('**/Gemfile.lock') }}
+          restore-keys: |
+            gems-${{ runner.os }}-
 
-    - run: bundle config set deployment 'true'
-    - name: bundle install
-      run: |
-        bundle config path vendor/bundle
-        bundle install --jobs 4 --retry 3
+      - name: Bundle install
+        run: |
+          bundle config path vendor/bundle
+          bundle install --jobs 4 --retry 3
 
-    - run: bundle exec middleman build
+      - name: Build Slate project
+        run: bundle exec middleman build
