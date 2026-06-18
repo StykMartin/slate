@@ -14,7 +14,7 @@ jobs:
       image: ghcr.io/oracle/oraclelinux8-ruby:3.3
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install dependencies
         run: |
